@@ -55,7 +55,11 @@ class OperaStudioHTTPSMCPServer {
     this.keyPath = keyPath;
     this.apiKey = apiKey;
 
-    this.security = new SecurityPolicy(mode);
+    // In containerized environments, allow /root if it's the home directory
+    const deniedPaths = os.homedir() === '/root'
+      ? ["/etc", "/usr", "/bin", "/sbin", "/lib", "/lib64", "/sys", "/proc", "/dev", "/boot"]
+      : undefined;
+    this.security = new SecurityPolicy(mode, undefined, deniedPaths);
     this.fsTools = new FileSystemTools(this.security);
     this.cmdTools = new CommandTools(this.security);
     const downloadPath = path.join(os.homedir(), "Downloads");

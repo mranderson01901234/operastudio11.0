@@ -32,13 +32,19 @@ class OperaStudioHTTPSMCPServer {
     certPath;
     keyPath;
     sseClients = new Set();
-    constructor(mode = "SAFE", port = 3000, useHttps = false, certPath, keyPath) {
+    apiKey;
+    constructor(mode = "SAFE", port = 3000, useHttps = false, certPath, keyPath, apiKey) {
         this.mode = mode;
         this.port = port;
         this.useHttps = useHttps;
         this.certPath = certPath;
         this.keyPath = keyPath;
-        this.security = new SecurityPolicy(mode);
+        this.apiKey = apiKey;
+        // In containerized environments, allow /root if it's the home directory
+        const deniedPaths = os.homedir() === '/root'
+            ? ["/etc", "/usr", "/bin", "/sbin", "/lib", "/lib64", "/sys", "/proc", "/dev", "/boot"]
+            : undefined;
+        this.security = new SecurityPolicy(mode, undefined, deniedPaths);
         this.fsTools = new FileSystemTools(this.security);
         this.cmdTools = new CommandTools(this.security);
         const downloadPath = path.join(os.homedir(), "Downloads");
@@ -414,13 +420,47 @@ class OperaStudioHTTPSMCPServer {
         this.app.use((req, res, next) => {
             res.header("Access-Control-Allow-Origin", "*");
             res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-            res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Id");
+            res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Id, X-API-Key");
             if (req.method === "OPTIONS") {
                 res.sendStatus(200);
                 return;
             }
             next();
         });
+        // API Key Authentication (if enabled)
+        if (this.apiKey) {
+            console.log("[Auth] API key authentication enabled");
+            this.app.use("/mcp", (req, res, next) => {
+                const apiKey = req.headers["x-api-key"] ||
+                    req.headers["authorization"]?.replace("Bearer ", "") ||
+                    req.query.apiKey;
+                if (!apiKey || apiKey !== this.apiKey) {
+                    console.warn(`[Auth] Rejected request from ${req.ip || "unknown"} - invalid or missing API key`);
+                    return res.status(401).json({
+                        error: "Unauthorized",
+                        message: "Invalid or missing API key. Provide API key via X-API-Key header, Authorization: Bearer <key>, or ?apiKey=<key> query parameter."
+                    });
+                }
+                console.log(`[Auth] Authenticated request from ${req.ip || "unknown"}`);
+                next();
+            });
+            // Also protect live updates endpoint
+            this.app.use("/updates", (req, res, next) => {
+                const apiKey = req.headers["x-api-key"] ||
+                    req.headers["authorization"]?.replace("Bearer ", "") ||
+                    req.query.apiKey;
+                if (!apiKey || apiKey !== this.apiKey) {
+                    console.warn(`[Auth] Rejected updates request from ${req.ip || "unknown"} - invalid API key`);
+                    res.status(401).write(`data: ${JSON.stringify({ type: "error", message: "Unauthorized: Invalid API key" })}\n\n`);
+                    res.end();
+                    return;
+                }
+                next();
+            });
+        }
+        else {
+            console.warn("[Auth] No API key set - server accepts all localhost requests");
+        }
         // Health check endpoint
         this.app.get("/health", (req, res) => {
             res.json({
@@ -604,8 +644,9 @@ const defaultCertPath = path.join(process.cwd(), "localhost.pem");
 const defaultKeyPath = path.join(process.cwd(), "localhost-key.pem");
 const certPath = process.env.MCP_CERT_PATH || defaultCertPath;
 const keyPath = process.env.MCP_KEY_PATH || defaultKeyPath;
+const apiKey = process.env.MCP_API_KEY;
 // Start server
-const server = new OperaStudioHTTPSMCPServer(mode, port, useHttps, certPath, keyPath);
+const server = new OperaStudioHTTPSMCPServer(mode, port, useHttps, certPath, keyPath, apiKey);
 server.start().catch((error) => {
     console.error("Failed to start MCP HTTPS server:", error);
     process.exit(1);
