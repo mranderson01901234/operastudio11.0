@@ -1,0 +1,272 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DeviceStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+}
+
+enum SessionMode {
+  SAFE
+  BALANCED
+  UNRESTRICTED
+}
+
+enum SessionStatus {
+  ACTIVE
+  ENDED
+  REVOKED
+}
+
+enum ToolRunStatus {
+  SUCCESS
+  ERROR
+  CANCELLED
+}
+
+enum EmailAccountStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  ERROR
+}
+
+enum GitHubAccountStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  ERROR
+}
+
+model Device {
+  id               String       @id @default(uuid())
+  userId           String       @map("user_id")
+  deviceName       String       @map("device_name")
+  devicePublicKey  String       @map("device_public_key") @db.Text
+  status           DeviceStatus @default(PENDING)
+  os               String
+  arch             String
+  hostname         String
+  launcherVersion  String?      @map("launcher_version")
+  pairedAt         DateTime?    @map("paired_at")
+  lastSeenAt       DateTime?    @map("last_seen_at")
+  revokedAt        DateTime?    @map("revoked_at")
+  revocationReason String?      @map("revocation_reason")
+  rotationCount    Int          @default(0) @map("rotation_count")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  deviceKeys DeviceKey[]
+  sessions   LocalSession[]
+  toolRuns   ToolRun[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("devices")
+}
+
+model DeviceKey {
+  id                  String    @id @default(uuid())
+  deviceId            String    @map("device_id")
+  publicKey           String    @map("public_key") @db.Text
+  privateKeyEncrypted String    @map("private_key_encrypted") @db.Text
+  expiresAt           DateTime  @map("expires_at")
+  revokedAt           DateTime? @map("revoked_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId])
+  @@map("device_keys")
+}
+
+model LocalSession {
+  id              String        @id @default(uuid())
+  deviceId        String        @map("device_id")
+  userId          String        @map("user_id")
+  sessionSecret   String        @map("session_secret") @db.Text
+  mcpPort         Int           @map("mcp_port")
+  mode            SessionMode?
+  durationMinutes Int?          @map("duration_minutes")
+  status          SessionStatus @default(ACTIVE)
+  serverType      String?       @map("server_type") // "filesystem" | "image-editing"
+  startedAt       DateTime      @map("started_at")
+  endedAt         DateTime?     @map("ended_at")
+  systemInfo      Json?         @map("system_info")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  device   Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  toolRuns ToolRun[]
+
+  @@index([deviceId])
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status])
+  @@index([userId, serverType, status])
+  @@index([deviceId, status, startedAt])
+  @@map("local_sessions")
+}
+
+model ToolRun {
+  id                String        @id @default(uuid())
+  sessionId         String        @map("session_id")
+  userId            String        @map("user_id")
+  deviceId          String        @map("device_id")
+  tool              String
+  argsHash          String        @map("args_hash")
+  pathsTouchedCount Int           @default(0) @map("paths_touched_count")
+  bytesRead         BigInt        @default(0) @map("bytes_read")
+  bytesWritten      BigInt        @default(0) @map("bytes_written")
+  exitCode          Int?          @map("exit_code")
+  status            ToolRunStatus
+  elevated          Boolean       @default(false)
+  durationMs        Int           @map("duration_ms")
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  session LocalSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  device  Device       @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([deviceId])
+  @@index([tool])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([sessionId, tool, createdAt])
+  @@map("tool_runs")
+}
+
+model EmailAccount {
+  id              String             @id @default(uuid())
+  userId          String             @map("user_id")
+  provider        String // "GMAIL", "OUTLOOK", etc.
+  email           String // User's email address
+  accessTokenEnc  String             @map("access_token_enc") @db.Text // Encrypted
+  refreshTokenEnc String             @map("refresh_token_enc") @db.Text // Encrypted
+  expiresAt       DateTime?          @map("expires_at")
+  scope           String             @db.Text // OAuth scopes granted
+  status          EmailAccountStatus @default(ACTIVE)
+  lastSyncedAt    DateTime?          @map("last_synced_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  @@unique([userId, provider, email])
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status, provider])
+  @@map("email_accounts")
+}
+
+model GitHubAccount {
+  id              String              @id @default(uuid())
+  userId          String              @map("user_id")
+  provider        String              @default("GITHUB") // "GITHUB", "GITHUB_ENTERPRISE", etc.
+  username        String // GitHub username
+  accessTokenEnc  String              @map("access_token_enc") @db.Text // Encrypted
+  refreshTokenEnc String?             @map("refresh_token_enc") @db.Text // Optional (GitHub doesn't always provide)
+  expiresAt       DateTime?           @map("expires_at")
+  scope           String              @db.Text // OAuth scopes granted
+  status          GitHubAccountStatus @default(ACTIVE)
+  lastSyncedAt    DateTime?           @map("last_synced_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  @@unique([userId, provider, username])
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status])
+  @@map("github_accounts")
+}
+
+model GeneratedImage {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+
+  // Image storage (file path or base64 for small images)
+  filePath String? @map("file_path") // Path to file in temp storage
+  data     String? @db.Text // base64 (only for small images <1.5MB)
+  mimeType String  @default("image/png") @map("mime_type")
+  bytes    Int     @default(0) // File size in bytes
+
+  // Previews (for UI)
+  preview256  String? @map("preview_256") @db.Text // base64 thumbnail
+  preview1024 String? @map("preview_1024") @db.Text // base64 preview
+
+  // Hashes for integrity
+  sourceHash String? @map("source_hash") // SHA256 of source image
+  outputHash String? @map("output_hash") // SHA256 of output image
+
+  // Recipe log (non-destructive edit history)
+  recipeJson String? @map("recipe_json") @db.Text // JSON array of edit steps
+
+  // Generation metadata
+  prompt      String @db.Text
+  model       String @default("imagen-4")
+  aspectRatio String @default("1:1") @map("aspect_ratio")
+
+  // Editing metadata
+  originalImageId String? @map("original_image_id") // For edit history
+  editType        String? @map("edit_type") // "crop", "resize", "adjust", etc.
+  editPrompt      String? @map("edit_prompt") @db.Text // User's edit request
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  originalImage GeneratedImage?  @relation("ImageEdits", fields: [originalImageId], references: [id])
+  edits         GeneratedImage[] @relation("ImageEdits")
+
+  @@index([userId])
+  @@index([originalImageId])
+  @@index([createdAt])
+  @@index([sourceHash])
+  @@index([outputHash])
+  @@map("generated_images")
+}
+
+model UploadedImage {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  fileName     String   @map("file_name")
+  originalName String   @map("original_name")
+  filePath     String   @map("file_path") // File system path
+  mimeType     String   @map("mime_type")
+  sizeBytes    Int      @map("size_bytes")
+  width        Int
+  height       Int
+  thumbnail    String   @db.Text // 256x256 base64 WebP preview
+  preview      String   @db.Text // 1024x1024 base64 WebP preview
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+
+  // For context tracking
+  messageId String? @map("message_id")
+
+  @@index([userId])
+  @@index([uploadedAt])
+  @@index([messageId])
+  @@map("uploaded_images")
+}
+
+model UserQuota {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  totalBytes Int     @default(0) @map("total_bytes")
+  imageCount Int     @default(0) @map("image_count")
+  maxBytes  Int      @default(104857600) @map("max_bytes") // 100MB default
+  maxImages Int      @default(50) @map("max_images") // 50 images default
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_quotas")
+}

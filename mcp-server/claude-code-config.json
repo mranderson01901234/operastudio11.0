@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "operastudio-filesystem": {
+      "command": "node",
+      "args": [
+        "/path/to/operastudio-11.0/mcp-server/dist/https-server.js",
+        "BALANCED",
+        "3001"
+      ],
+      "env": {
+        "MCP_MODE": "BALANCED",
+        "MCP_PORT": "3001"
+      }
+    }
+  }
+}
+

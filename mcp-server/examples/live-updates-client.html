@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OperaStudio Live Updates Client</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .updates {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+        .update-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #007bff;
+            background: white;
+            border-radius: 4px;
+        }
+        .update-item.deleted {
+            border-left-color: #dc3545;
+        }
+        .update-item.updated {
+            border-left-color: #28a745;
+        }
+        .update-path {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .update-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .update-preview {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .config {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OperaStudio Live Updates Client</h1>
+        
+        <div class="config">
+            <label>
+                Server URL:
+                <input type="text" id="serverUrl" value="https://localhost:3001" placeholder="https://localhost:3001">
+            </label>
+            <button onclick="connect()" id="connectBtn">Connect</button>
+            <button onclick="disconnect()" id="disconnectBtn" disabled>Disconnect</button>
+        </div>
+
+        <div id="status" class="status disconnected">
+            Disconnected
+        </div>
+
+        <div class="controls">
+            <button onclick="clearUpdates()">Clear Updates</button>
+            <span id="updateCount">0 updates received</span>
+        </div>
+
+        <h2>Live File Updates</h2>
+        <div id="updates" class="updates">
+            <p style="color: #666; text-align: center;">No updates yet. Connect to start receiving live updates.</p>
+        </div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        let updateCount = 0;
+
+        function connect() {
+            const url = document.getElementById('serverUrl').value;
+            const updatesUrl = url + '/updates';
+            
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            eventSource = new EventSource(updatesUrl);
+
+            eventSource.onopen = () => {
+                updateStatus('connected', 'Connected to ' + url);
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+            };
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'connected') {
+                        console.log('Connected with client ID:', data.clientId);
+                    } else if (data.type === 'file_update') {
+                        addUpdate(data);
+                        updateCount++;
+                        document.getElementById('updateCount').textContent = updateCount + ' updates received';
+                    }
+                } catch (error) {
+                    console.error('Error parsing SSE message:', error);
+                }
+            };
+
+            eventSource.onerror = (error) => {
+                console.error('SSE error:', error);
+                updateStatus('disconnected', 'Connection error. Check server URL.');
+                disconnect();
+            };
+        }
+
+        function disconnect() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            updateStatus('disconnected', 'Disconnected');
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+        }
+
+        function updateStatus(status, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status ' + status;
+            statusEl.textContent = message;
+        }
+
+        function addUpdate(data) {
+            const updatesEl = document.getElementById('updates');
+            
+            // Remove placeholder if present
+            if (updatesEl.children.length === 1 && updatesEl.children[0].tagName === 'P') {
+                updatesEl.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = 'update-item ' + data.action;
+            
+            const path = document.createElement('div');
+            path.className = 'update-path';
+            path.textContent = data.path;
+            
+            const meta = document.createElement('div');
+            meta.className = 'update-meta';
+            meta.textContent = `${data.action.toUpperCase()} at ${new Date(data.timestamp).toLocaleString()}`;
+            
+            item.appendChild(path);
+            item.appendChild(meta);
+
+            if (data.content) {
+                const preview = document.createElement('div');
+                preview.className = 'update-preview';
+                preview.textContent = data.content;
+                item.appendChild(preview);
+            }
+
+            updatesEl.insertBefore(item, updatesEl.firstChild);
+
+            // Keep only last 50 updates
+            while (updatesEl.children.length > 50) {
+                updatesEl.removeChild(updatesEl.lastChild);
+            }
+        }
+
+        function clearUpdates() {
+            const updatesEl = document.getElementById('updates');
+            updatesEl.innerHTML = '<p style="color: #666; text-align: center;">Updates cleared.</p>';
+            updateCount = 0;
+            document.getElementById('updateCount').textContent = '0 updates received';
+        }
+
+        // Auto-connect on page load if URL is set
+        window.addEventListener('load', () => {
+            const url = document.getElementById('serverUrl').value;
+            if (url) {
+                // Small delay to ensure page is fully loaded
+                setTimeout(() => connect(), 500);
+            }
+        });
+    </script>
+</body>
+</html>
+

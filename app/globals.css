@@ -1,0 +1,471 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-inter);
+  --font-body: var(--font-inter);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Email content styling */
+.email-content {
+  @apply text-foreground;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Override prose max-width constraints */
+.email-content.prose {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.email-content img {
+  @apply max-w-full h-auto rounded-md;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Ensure all content elements can use full width */
+.email-content > * {
+  max-width: 100%;
+}
+
+.email-content p,
+.email-content div,
+.email-content span {
+  max-width: 100%;
+}
+
+/* Remove default list styling that causes small circles */
+.email-content ul,
+.email-content ol {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 0;
+  position: relative;
+}
+
+.email-content li {
+  padding-left: 0;
+  margin-left: 0;
+  position: relative;
+}
+
+/* Prevent layout shifts from list markers */
+.email-content ul::before,
+.email-content ol::before {
+  display: none;
+}
+
+/* If lists need bullets, use custom styling that doesn't affect layout */
+.email-content ul li::before {
+  content: "• ";
+  margin-right: 0.5rem;
+  color: currentColor;
+  position: absolute;
+  left: 0;
+}
+
+.email-content ul li {
+  padding-left: 1.5rem;
+}
+
+.email-content table {
+  @apply border-collapse border border-border;
+}
+
+.email-content table td,
+.email-content table th {
+  @apply border border-border p-2;
+}
+
+.email-content a {
+  @apply text-primary underline;
+}
+
+.email-content pre {
+  @apply bg-muted p-4 rounded-md overflow-x-auto;
+}
+
+.email-content code {
+  @apply bg-muted px-1 py-0.5 rounded text-sm;
+}
+
+.email-content pre code {
+  @apply bg-transparent p-0;
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply overflow-x-hidden;
+  }
+  body {
+    @apply bg-background text-foreground font-body overflow-x-hidden;
+  }
+  
+  /* OVERRIDE: Remove all bold styling from message content strong tags */
+  .message-content strong {
+    font-weight: normal !important;
+    font-size: inherit !important;
+    color: inherit !important;
+  }
+}
+
+/* Premium dark scrollbar styling */
+@layer utilities {
+  .premium-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #4a4a4a #1a1a1a;
+  }
+
+  .premium-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .premium-scrollbar::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 5px;
+  }
+
+  .premium-scrollbar::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 5px;
+    border: 2px solid #1a1a1a;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5a;
+    border-color: #2a2a2a;
+  }
+
+  .premium-scrollbar::-webkit-scrollbar-thumb:active {
+    background: #6a6a6a;
+    border-color: #3a3a3a;
+  }
+
+  .premium-scrollbar::-webkit-scrollbar-corner {
+    background: #1a1a1a;
+  }
+
+  /* Dark mode specific styling - more visible */
+  .dark .premium-scrollbar {
+    scrollbar-color: #5a5a5a #2a2a2a;
+  }
+
+  .dark .premium-scrollbar::-webkit-scrollbar-track {
+    background: #2a2a2a;
+  }
+
+  .dark .premium-scrollbar::-webkit-scrollbar-thumb {
+    background: #5a5a5a;
+    border: 2px solid #2a2a2a;
+  }
+
+  .dark .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6a6a6a;
+    border-color: #3a3a3a;
+  }
+
+  .dark .premium-scrollbar::-webkit-scrollbar-thumb:active {
+    background: #7a7a7a;
+    border-color: #4a4a4a;
+  }
+
+  .dark .premium-scrollbar::-webkit-scrollbar-corner {
+    background: #2a2a2a;
+  }
+
+  /* Monaco Editor diff decorations */
+  .monaco-diff-added {
+    background-color: rgba(34, 197, 94, 0.15) !important;
+    border-left: 2px solid #22c55e !important;
+  }
+
+  .monaco-diff-removed {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    border-left: 2px solid #ef4444 !important;
+  }
+
+  .monaco-diff-added-glyph {
+    background-color: #22c55e !important;
+  }
+
+  .monaco-diff-removed-glyph {
+    background-color: #ef4444 !important;
+  }
+
+  .monaco-diff-added-margin {
+    background-color: rgba(34, 197, 94, 0.2) !important;
+  }
+
+  .monaco-diff-removed-margin {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+  }
+
+  .monaco-diff-accepted {
+    background-color: rgba(34, 197, 94, 0.1) !important;
+    border-left: 2px solid #22c55e !important;
+  }
+
+  .monaco-diff-accepted-glyph {
+    background-color: #22c55e !important;
+  }
+
+  .monaco-diff-accepted-margin {
+    background-color: rgba(34, 197, 94, 0.15) !important;
+  }
+
+  /* Inline change controls - ensure horizontal layout and transparency */
+  .inline-change-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .inline-change-controls button {
+    display: inline-flex !important;
+    flex-shrink: 0 !important;
+    background: rgba(34, 197, 94, 0.4) !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    padding: 2px 6px !important;
+    font-size: 9px !important;
+    height: 16px !important;
+    line-height: 1 !important;
+  }
+
+  .inline-change-controls button:last-child {
+    background: rgba(239, 68, 68, 0.4) !important;
+  }
+
+  /* Smooth fade-in animation for streaming content */
+  @keyframes fadeIn {
+    from {
+      opacity: 0.6;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Smooth text reveal animation for streaming - subtle and continuous */
+  .streaming-text {
+    animation: fadeIn 0.6s ease-in-out;
+    will-change: opacity;
+  }
+
+  /* Smooth scrolling for chat viewport */
+  .chat-viewport {
+    scroll-behavior: smooth;
+  }
+  
+  /* COMMENTED OUT: Remove spacing between list items in chat messages */
+  /* .message-content ul,
+  .message-content ol {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    gap: 0 !important;
+  }
+  
+  .message-content ul li,
+  .message-content ol li {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 1.5 !important;
+  }
+  
+  .message-content ul li + li,
+  .message-content ol li + li {
+    margin-top: 0 !important;
+  }
+  
+  .message-content ul li p,
+  .message-content ol li p {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: inherit !important;
+  }
+  
+  .message-content ul li p:first-child,
+  .message-content ol li p:first-child {
+    margin-top: 0 !important;
+  }
+  
+  .message-content ul li p:last-child,
+  .message-content ol li p:last-child {
+    margin-bottom: 0 !important;
+  } */
+  
+  /* YouTube video card styling */
+  .message-content .youtube-video-card {
+    margin: 1rem 0;
+  }
+  
+  /* Ensure YouTube cards break out of list items properly */
+  .message-content ul li > div,
+  .message-content ol li > div {
+    margin-left: 0;
+    list-style: none;
+  }
+  
+  /* Search source cards scrollbar - thin and dark themed */
+  .search-source-cards-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+  }
+
+  .search-source-cards-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .search-source-cards-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .search-source-cards-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.3);
+    border-radius: 3px;
+  }
+
+  .search-source-cards-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.5);
+  }
+
+  /* Dark mode specific styling */
+  .dark .search-source-cards-scroll {
+    scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+  }
+
+  .dark .search-source-cards-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.4);
+  }
+
+  .dark .search-source-cards-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.6);
+  }
+}

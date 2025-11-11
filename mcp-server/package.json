@@ -1,0 +1,33 @@
+{
+  "name": "@operastudio/mcp-server",
+  "version": "0.1.0",
+  "description": "OperaStudio MCP Server for local file system access",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "dev:https": "tsx watch src/https-server.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:https": "node dist/https-server.js",
+    "start:https:dev": "tsx src/https-server.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "filesystem"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.21.1",
+    "express": "^4.18.2",
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.0.0"
+  }
+}
