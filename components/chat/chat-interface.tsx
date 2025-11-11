@@ -3156,6 +3156,11 @@ export function ChatInterface() {
         <div
           className="py-4 md:py-6 pb-24 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 space-y-6 max-w-full"
         >
+          {/* 🔴 LIVE TEST MARK - MCP Connection Active */}
+          <div className="bg-green-500/10 border border-green-500/50 rounded-lg p-3 text-center">
+            <span className="text-green-400 font-semibold">🔴 LIVE TEST MARK - MCP Connection Active</span>
+          </div>
+
           {/* Show sign-in buttons when user is not signed in */}
           {!user && isLoaded && (
             <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] gap-4">
